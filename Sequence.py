@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.signal import convolve2d
 
 class Sequence:
     def __init__(self):
@@ -74,5 +75,54 @@ class Sequence:
             j += 1
         return moves
         
-    #def check_winner(self):
+    def check_winner(self):
+        kernels = [np.diag(np.ones(5)),np.flip(np.diag(np.ones(5)),axis=0),np.ones(5).reshape(5,-1),np.ones(5).reshape(-1,5)]
+        for k in kernels:
+            conv = convolve2d(self.tokens,k,mode='valid')
+            sol = np.stack(np.where(conv==5)).T
+            if len(sol) > 0:
+                return 1
+            sol = np.stack(np.where(conv==-5)).T
+            if len(sol) > 0:
+                return -1
+        return 0
+    
+    def score_move(self,play,player):
+        kernels = [np.diag(np.ones(5)),np.flip(np.diag(np.ones(5)),axis=0),np.ones(5).reshape(5,-1),np.ones(5).reshape(-1,5)]
+        new_board = self.tokens.copy()
+        #place or remove token
+        if self.hands[(player+1)//2][play[0]] in [48,49]:
+            new_board[play[1][0],play[1][1]] = 0
+        else:
+            new_board[play[1][0],play[1][1]] = player
         
+        temp = new_board.copy()
+        temp[temp==-1] = -5
+        bcounts = np.zeros(4)
+        for k in kernels:
+            conv = convolve2d(temp,k,mode='valid')
+            for i in range(4):
+                bcounts[i] += (conv==(i+1)).sum()
+
+        temp = new_board.copy()*-1
+        temp[temp==-1] = -5
+        wcounts = np.zeros(4)
+        for k in kernels:
+            conv = convolve2d(temp,k,mode='valid')
+            for i in range(4):
+                wcounts[i] += (conv==(i+1)).sum()
+        weights = np.power(np.ones(4)*3,np.arange(4)+1)
+        return (weights @ bcounts - weights @ wcounts)*player
+
+if __name__ == '__main__':
+    game = Sequence()
+    i = 0
+    while game.check_winner()==0:
+        player = (-1)**i
+        moves = game.get_moves(player)
+        scores = list()
+        for move in moves:
+            scores.append(game.score_move(move,player))
+        game.play(moves[np.argmax(scores)],player)
+        game.show_board()
+        i += 1
