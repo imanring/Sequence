@@ -141,8 +141,8 @@ class Sequence:
             old_board[play[1][0],play[1][1]] = 0
         else:
             old_board[play[1][0],play[1][1]] = self.turn
-        bcounts = self._count_seq(old_board.copy()*self.turn)
-        rcounts = self._count_seq(old_board.copy()*self.turn*-1)
+        bcounts = self._count_seq(old_board.copy()*self.turn,p_1=1)
+        rcounts = self._count_seq(old_board.copy()*self.turn*-1,p_1=1)
         c = -1
         scores = list()
         for i in range(len(moves)):
@@ -152,7 +152,7 @@ class Sequence:
                     old_board[play[1][0],play[1][1]] = 0
                 else:
                     old_board[play[1][0],play[1][1]] = self.turn
-        old_board[moves[move_ind][1][0],moves[move_ind][1][1]] -= 0.5
+        old_board[moves[move_ind][1][0],moves[move_ind][1][1]] += 0.5
         pot_counts = self._count_seq(old_board.copy()*self.turn,p_1=0.5)
         oej = 0
         tej = 0
